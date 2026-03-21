@@ -22,7 +22,7 @@ def run(settings: Settings) -> dict:
     )
     scorer = HotDealScorer()
     service = HotDealsRefreshService(search_client, scorer)
-    writer = get_storage_writer(settings.STORAGE_ADAPTER)
+    writer = get_storage_writer(settings.STORAGE_ADAPTER, settings.S3_BUCKET_NAME)
     
     logger.info(
         "Starting job %s for origin=%s destinations=%s",

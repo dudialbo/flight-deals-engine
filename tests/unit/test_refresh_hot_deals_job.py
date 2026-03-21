@@ -37,6 +37,7 @@ def test_refresh_hot_deals_job_happy_path(mock_service_cls, mock_get_writer, moc
     assert result["destinations_failed"] == 0
     assert result["deals_persisted"] == 2
 
+    mock_get_writer.assert_called_once_with(settings.STORAGE_ADAPTER, settings.S3_BUCKET_NAME)
     mock_writer.write_hot_deals.assert_called_once()
 
 @patch("flight_deals_engine.jobs.refresh_hot_deals.SearchBackendHttpClient")
@@ -88,4 +89,5 @@ def test_refresh_hot_deals_job_partial_failures(mock_service_cls, mock_get_write
     assert result["destinations_failed"] == 1
     assert result["deals_persisted"] == 1
 
+    mock_get_writer.assert_called_once_with(settings.STORAGE_ADAPTER, settings.S3_BUCKET_NAME)
     mock_writer.write_hot_deals.assert_called_once()

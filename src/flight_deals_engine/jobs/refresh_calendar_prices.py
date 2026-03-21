@@ -26,7 +26,7 @@ def run(settings: Settings, command: RefreshCalendarPricesCommand) -> dict:
         base_url=settings.SEARCH_BACKEND_BASE_URL,
         timeout_seconds=settings.SEARCH_BACKEND_TIMEOUT_SECONDS,
     )
-    writer = get_storage_writer(settings.STORAGE_ADAPTER)
+    writer = get_storage_writer(settings.STORAGE_ADAPTER, settings.S3_BUCKET_NAME)
     
     logger.info("Using storage adapter: %s", settings.STORAGE_ADAPTER)
 
