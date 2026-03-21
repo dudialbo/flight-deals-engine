@@ -1,0 +1,9 @@
+pydantic<3,>=2.8
+pydantic-settings<3,>=2.4
+httpx<1,>=0.27
+
+[dev]
+pytest<9,>=8.0
+pytest-cov<6,>=5.0
+ruff<1,>=0.6
+mypy<2,>=1.10
