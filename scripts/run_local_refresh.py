@@ -10,7 +10,8 @@ if __name__ == "__main__":
     configure_logging("DEBUG")
     
     settings = Settings()
-    # Ensure settings also use DEBUG if loaded from env, but configure_logging above overrides it for the root logger
+    # Explicitly use json adapter so we can debug output locally
+    settings.STORAGE_ADAPTER = "json"
 
     command = RefreshCalendarPricesCommand(jobType="refresh_calendar_prices")
     print(run(settings, command))

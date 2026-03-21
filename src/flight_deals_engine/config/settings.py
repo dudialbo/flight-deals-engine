@@ -24,7 +24,8 @@ class Settings(BaseSettings):
     DEFAULT_CURRENCY: str = "USD"
 
     # Adapters
-    STORAGE_ADAPTER: str = "null"  # Options: "null", "in_memory", "dynamodb"
+    STORAGE_ADAPTER: str = "null"  # Options: "null", "in_memory", "dynamodb", "json", "s3"
+    S3_BUCKET_NAME: Optional[str] = None
 
     # Hot Deals Configuration
     HOT_DEALS_DESTINATIONS: List[str] = Field(
