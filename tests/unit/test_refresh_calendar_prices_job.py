@@ -74,7 +74,7 @@ def test_refresh_calendar_prices_job(
     mock_client.search_flights.assert_called_once_with(target)
     mock_select_cheapest.assert_called_once()
     mock_transform.assert_called_once()
-    mock_get_writer.assert_called_once_with("null")
+    mock_get_writer.assert_called_once_with("null", None)
     mock_writer.write_calendar_snapshots.assert_called_once()
     args, _ = mock_writer.write_calendar_snapshots.call_args
     assert args[0] == [snapshot]

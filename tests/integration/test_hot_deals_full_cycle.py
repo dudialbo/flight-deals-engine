@@ -86,3 +86,5 @@ def test_hot_deals_full_cycle_success(mock_get_writer, mock_http_client_cls):
 
     assert deals[1].destination == "LON"
     assert deals[1].price == Decimal("250.0")
+
+    mock_get_writer.assert_called_once_with("in_memory", None)

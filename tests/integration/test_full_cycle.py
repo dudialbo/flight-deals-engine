@@ -92,3 +92,4 @@ def test_full_cycle_success(mock_get_writer, mock_http_client_cls):
     assert snapshot.destination == "LON"
     assert snapshot.cheapest_price == Decimal("110.0")
     assert snapshot.currency == "USD"
+    mock_get_writer.assert_called_once_with("in_memory", None)
