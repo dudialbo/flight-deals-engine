@@ -29,7 +29,7 @@ class Settings(BaseSettings):
 
     # Hot Deals Configuration
     HOT_DEALS_DESTINATIONS: List[str] = Field(
-        default_factory=lambda: ["LON", "PAR", "ATH", "ROM", "MAD", "BCN", "RHO", "HER"]
+        default_factory=lambda: ["LON", "PAR", "ATH", "ROM", "MAD", "BCN", "RHO", "HER", "AMS", "BUD", "VIE", "LIS", "BER"]
     )
     HOT_DEALS_SEARCH_HORIZON_DAYS: int = 90
     HOT_DEALS_NIGHTS_MIN: int = 4
