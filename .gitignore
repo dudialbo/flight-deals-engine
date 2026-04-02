@@ -24,3 +24,4 @@ __pycache__/
 htmlcov/
 .terraform
 .terraform.lock.hcl
+tfplan
