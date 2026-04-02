@@ -1,8 +1,7 @@
-from typing import Protocol, Sequence
+from typing import Any, Mapping, Protocol, Sequence
 from flight_deals_engine.domain.models import (
     CalendarPriceSnapshot,
     FlightOption,
-    HotDealCandidate,
     RefreshTarget,
 )
 
@@ -15,5 +14,6 @@ class PriceSnapshotWriter(Protocol):
     def write_calendar_snapshots(self, items: Sequence[CalendarPriceSnapshot]) -> None: ...
 
 
-class HotDealsWriter(Protocol):
-    def write_hot_deals(self, items: Sequence[HotDealCandidate]) -> None: ...
+class DealCatalogWriter(Protocol):
+    def write_category(self, category_id: str, payload: Mapping[str, Any]) -> None: ...
+    def write_manifest(self, payload: Mapping[str, Any]) -> None: ...

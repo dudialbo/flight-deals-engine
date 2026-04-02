@@ -1,6 +1,6 @@
 import time
 import logging
-from datetime import date, datetime, timezone
+from datetime import date
 from typing import List
 
 from flight_deals_engine.domain.models import CalendarPriceSnapshot
@@ -17,7 +17,7 @@ logger = logging.getLogger(__name__)
 JOB_NAME = "refresh_calendar_prices"
 
 
-def run(settings: Settings, command: RefreshCalendarPricesCommand) -> dict:
+def run(settings: Settings, command: RefreshCalendarPricesCommand) -> dict[str, object]:
     start_time = time.time()
     
     # 1. Initialize components

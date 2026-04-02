@@ -22,3 +22,6 @@ __pycache__/
 .pytest_cache/
 .coverage
 htmlcov/
+.terraform
+.terraform.lock.hcl
+tfplan

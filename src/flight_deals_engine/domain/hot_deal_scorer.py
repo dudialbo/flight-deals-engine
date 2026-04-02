@@ -1,27 +1,21 @@
-from decimal import Decimal
-from typing import List
-from flight_deals_engine.domain.models import FlightOption, HotDealCandidate
+from typing import List, Literal
+from flight_deals_engine.domain.models import DealItem
 
 
-class HotDealScorer:
-    """
-    Evaluates and ranks flight options to determine hot deals.
-    """
+class DealRanker:
+    def rank(
+        self,
+        candidates: List[DealItem],
+        mode: Literal["price", "weekend", "value"] = "price",
+    ) -> List[DealItem]:
+        if mode == "price":
+            return self._rank_by_price(candidates)
+        if mode == "weekend":
+            return self._rank_by_weekend(candidates)
+        return self._rank_by_price(candidates)  # value not yet implemented
 
-    def rank_deals(self, candidates: List[HotDealCandidate]) -> List[HotDealCandidate]:
-        """
-        Ranks a list of HotDealCandidate objects.
-        
-        Ranking rules for Phase 1:
-        1. Lowest price
-        2. Earliest outbound departure date
-        3. Destination code (stable tie-breaker)
-        """
-        return sorted(
-            candidates,
-            key=lambda deal: (
-                deal.price,
-                deal.departure_date,
-                deal.destination
-            )
-        )
+    def _rank_by_price(self, candidates: List[DealItem]) -> List[DealItem]:
+        return sorted(candidates, key=lambda d: (d.price, d.departure_date, d.destination_code or ""))
+
+    def _rank_by_weekend(self, candidates: List[DealItem]) -> List[DealItem]:
+        return sorted(candidates, key=lambda d: (d.stops, d.price, d.departure_date))

@@ -12,14 +12,22 @@ class SearchBackendRequest(BaseModel):
     # Optional return window
     return_from: Optional[date] = None
     return_to: Optional[date] = None
-    
+
     nights_in_dst_from: Optional[int] = None
     nights_in_dst_to: Optional[int] = None
-    
+
     passengers: int = 1
     limit: int = 100
-    
+
     direct_only: Optional[bool] = None
+
+
+class Segment(BaseModel):
+    duration_seconds: Optional[int] = None
+
+
+class Layover(BaseModel):
+    duration: Optional[str] = None  # e.g. "3h 0m"
 
 
 class FlightLeg(BaseModel):
@@ -29,10 +37,13 @@ class FlightLeg(BaseModel):
     airlineLogo: Optional[str] = None
     flightNumber: Optional[str] = None
     originCode: Optional[str] = None
+    destination: Optional[str] = None       # human-readable city name e.g. "Bangkok"
     destinationCode: Optional[str] = None
     destinationCityCode: Optional[str] = None
     departureDate: date
     stops: int = 0
+    segments: List[Segment] = []
+    layovers: List[Layover] = []
 
 
 class BackendFlightResult(BaseModel):

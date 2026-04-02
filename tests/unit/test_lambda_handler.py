@@ -1,7 +1,6 @@
 import pytest
-from unittest.mock import MagicMock, patch
+from unittest.mock import patch
 from flight_deals_engine.entrypoints.lambda_handler import lambda_handler
-from flight_deals_engine.jobs import refresh_calendar_prices, refresh_hot_deals
 from flight_deals_engine.application.commands import RefreshCalendarPricesCommand
 
 @patch("flight_deals_engine.entrypoints.lambda_handler.Settings")

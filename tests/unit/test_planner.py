@@ -1,6 +1,5 @@
 from datetime import date
 from flight_deals_engine.application.planner import RefreshPlanner
-from flight_deals_engine.domain.models import RefreshTarget
 
 def test_planner_build_monthly_targets():
     planner = RefreshPlanner()
