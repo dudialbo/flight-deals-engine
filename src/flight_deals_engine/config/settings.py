@@ -17,6 +17,9 @@ class Settings(BaseSettings):
     SEARCH_BACKEND_BASE_URL: str
     SEARCH_BACKEND_API_KEY: Optional[str] = None
     SEARCH_BACKEND_TIMEOUT_SECONDS: int = 20
+    SEARCH_BACKEND_REQUEST_DELAY_SECONDS: float = 0.3   # throttle between per-destination calls
+    SEARCH_BACKEND_MAX_RETRIES: int = 3                  # retries on 429
+    SEARCH_BACKEND_RETRY_BACKOFF_SECONDS: float = 1.0   # base backoff; doubles each attempt
 
     # Defaults
     DEFAULT_ORIGIN: str = "TLV"

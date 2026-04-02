@@ -1,5 +1,5 @@
 from datetime import date
-from unittest.mock import MagicMock, patch
+from unittest.mock import patch
 from decimal import Decimal
 from flight_deals_engine.jobs.refresh_calendar_prices import run
 from flight_deals_engine.config.settings import Settings

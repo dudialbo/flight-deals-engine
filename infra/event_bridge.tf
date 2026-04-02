@@ -11,7 +11,7 @@ resource "aws_cloudwatch_event_target" "trigger_lambda_hot_deals" {
 
   # Pass the jobType so the lambda handler knows what to execute
   input = jsonencode({
-    "jobType" : "refresh_hot_deals"
+    "jobType" : "refresh_deal_categories"
   })
 }
 

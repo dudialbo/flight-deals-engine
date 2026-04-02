@@ -4,6 +4,8 @@ from flight_deals_engine.adapters.search_backend.dtos import SearchBackendReques
 
 
 def normalize_request(target: RefreshTarget, limit: int = 100) -> SearchBackendRequest:
+    if target.destination is None:
+        raise ValueError("destination is required for search")
     # Calculate return window based on stay duration if provided
     return_from = None
     return_to = None

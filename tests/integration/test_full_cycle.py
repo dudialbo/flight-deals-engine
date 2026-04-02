@@ -1,7 +1,5 @@
-from datetime import date
 from decimal import Decimal
 from unittest.mock import MagicMock, patch
-import httpx
 from flight_deals_engine.jobs.refresh_calendar_prices import run
 from flight_deals_engine.config.settings import Settings
 from flight_deals_engine.application.commands import RefreshCalendarPricesCommand, Scope

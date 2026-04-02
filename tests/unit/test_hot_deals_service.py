@@ -1,20 +1,34 @@
 from datetime import date, timedelta
-from unittest.mock import MagicMock
 from decimal import Decimal
-from flight_deals_engine.application.hot_deals_service import HotDealsRefreshService
-from flight_deals_engine.domain.hot_deal_scorer import HotDealScorer
-from flight_deals_engine.config.settings import Settings
-from flight_deals_engine.domain.models import FlightOption, HotDealCandidate
+from unittest.mock import MagicMock
 
-def test_build_target():
-    service = HotDealsRefreshService(MagicMock(), HotDealScorer())
-    settings = Settings(_env_file=None, SEARCH_BACKEND_BASE_URL="http://test")
-    settings.HOT_DEALS_SEARCH_HORIZON_DAYS = 30
-    settings.HOT_DEALS_NIGHTS_MIN = 4
-    settings.HOT_DEALS_NIGHTS_MAX = 5
-    settings.HOT_DEALS_DIRECT_ONLY = True
+from flight_deals_engine.application.deal_refresh_service import DealRefreshService
+from flight_deals_engine.domain.hot_deal_scorer import DealRanker
+from flight_deals_engine.domain.models import DealCategoryConfig, FlightOption
 
-    target = service.build_target("TLV", "LON", settings)
+
+def _make_config(**kwargs) -> DealCategoryConfig:  # type: ignore[no-untyped-def]
+    defaults = dict(
+        id="hot_deals",
+        title="Hot Deals",
+        destinations=["LON"],
+        date_horizon_days=30,
+        nights_min=4,
+        nights_max=5,
+        direct_only=True,
+        max_items=20,
+        selection_mode="cheapest_per_destination",
+        ranking_mode="price",
+    )
+    defaults.update(kwargs)
+    return DealCategoryConfig(**defaults)
+
+
+def test_build_target() -> None:
+    service = DealRefreshService(MagicMock(), DealRanker())
+    config = _make_config(date_horizon_days=30, nights_min=4, nights_max=5, direct_only=True)
+
+    target = service.build_target("TLV", "LON", config)
 
     assert target.origin == "TLV"
     assert target.destination == "LON"
@@ -24,55 +38,60 @@ def test_build_target():
     assert target.nights_max == 5
     assert target.direct_only is True
 
-def test_fetch_and_select_best_defensive_validation():
-    mock_client = MagicMock()
 
-    # 1 direct flight, 1 non-direct flight (cheaper)
-    f1 = FlightOption(
-        origin="TLV", destination="LON", departure_date=date(2023, 1, 1),
+def test_fetch_candidates_defensive_validation() -> None:
+    mock_client = MagicMock()
+    tomorrow = date.today() + timedelta(days=1)
+
+    f_direct = FlightOption(
+        origin="TLV", destination="LON", departure_date=tomorrow,
         price=Decimal("200"), currency="USD", stops=0
     )
-    f2 = FlightOption(
-        origin="TLV", destination="LON", departure_date=date(2023, 1, 1),
-        price=Decimal("150"), currency="USD", stops=1 # Cheaper but not direct
+    f_indirect = FlightOption(
+        origin="TLV", destination="LON", departure_date=tomorrow,
+        price=Decimal("150"), currency="USD", stops=1
     )
+    mock_client.search_flights.return_value = [f_direct, f_indirect]
 
-    mock_client.search_flights.return_value = [f1, f2]
-    service = HotDealsRefreshService(mock_client, HotDealScorer())
+    service = DealRefreshService(mock_client, DealRanker())
+    config = _make_config(direct_only=True)
+    target = service.build_target("TLV", "LON", config)
 
-    settings = Settings(_env_file=None, SEARCH_BACKEND_BASE_URL="http://test")
-    settings.HOT_DEALS_DIRECT_ONLY = True
-    target = service.build_target("TLV", "LON", settings)
+    results = service.fetch_candidates_for_destination(target, config)
 
-    best = service.fetch_and_select_best(target)
+    assert len(results) == 1
+    assert results[0].stops == 0
+    assert results[0].price == Decimal("200")
 
-    # Should select the direct flight even though it's more expensive
+
+def test_select_cheapest_per_destination() -> None:
+    service = DealRefreshService(MagicMock(), DealRanker())
+    tomorrow = date.today() + timedelta(days=1)
+    options = [
+        FlightOption(origin="TLV", destination="LON", departure_date=tomorrow,
+                     price=Decimal("300"), currency="USD"),
+        FlightOption(origin="TLV", destination="LON", departure_date=tomorrow,
+                     price=Decimal("200"), currency="USD"),
+    ]
+    best = service.select_cheapest_per_destination(options)
     assert best is not None
     assert best.price == Decimal("200")
-    assert best.stops == 0
 
-def test_rank_deals():
-    service = HotDealsRefreshService(MagicMock(), HotDealScorer())
 
-    c1 = HotDealCandidate(
-        deal_id="1", origin="TLV", destination="LON",
-        price=Decimal("200"), currency="USD", score=0,
-        discovered_at=date(2023, 1, 1), departure_date=date(2023, 1, 10)
-    )
-    c2 = HotDealCandidate(
-        deal_id="2", origin="TLV", destination="PAR",
-        price=Decimal("150"), currency="USD", score=0,
-        discovered_at=date(2023, 1, 1), departure_date=date(2023, 1, 15)
-    )
-    c3 = HotDealCandidate(
-        deal_id="3", origin="TLV", destination="ROM",
-        price=Decimal("150"), currency="USD", score=0,
-        discovered_at=date(2023, 1, 1), departure_date=date(2023, 1, 12) # Same price, earlier date
-    )
+def test_generate_category_cheapest_per_destination() -> None:
+    mock_client = MagicMock()
+    tomorrow = date.today() + timedelta(days=1)
 
-    ranked = service.rank_deals([c1, c2, c3])
+    mock_client.search_flights.return_value = [
+        FlightOption(origin="TLV", destination="LON", departure_date=tomorrow,
+                     price=Decimal("150"), currency="USD", stops=0)
+    ]
 
-    assert len(ranked) == 3
-    assert ranked[0].destination == "ROM" # 150, earlier date
-    assert ranked[1].destination == "PAR" # 150, later date
-    assert ranked[2].destination == "LON" # 200
+    service = DealRefreshService(mock_client, DealRanker())
+    config = _make_config(destinations=["LON", "PAR"], selection_mode="cheapest_per_destination")
+
+    items, skipped = service.generate_category(config, "TLV", "USD")
+
+    assert len(items) == 2
+    assert skipped == 0
+    assert all(i.category_id == "hot_deals" for i in items)
