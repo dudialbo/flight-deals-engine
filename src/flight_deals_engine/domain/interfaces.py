@@ -17,3 +17,7 @@ class PriceSnapshotWriter(Protocol):
 
 class HotDealsWriter(Protocol):
     def write_hot_deals(self, items: Sequence[HotDealCandidate]) -> None: ...
+
+
+class LastMinuteDealsWriter(Protocol):
+    def write_last_minute_deals(self, items: Sequence[HotDealCandidate]) -> None: ...

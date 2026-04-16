@@ -1,5 +1,5 @@
 from flight_deals_engine.config.settings import Settings
-from flight_deals_engine.jobs import refresh_calendar_prices, refresh_hot_deals
+from flight_deals_engine.jobs import refresh_calendar_prices, refresh_hot_deals, refresh_last_minute_deals
 from flight_deals_engine.observability.logging import configure_logging
 from flight_deals_engine.application.commands import RefreshCalendarPricesCommand
 
@@ -18,5 +18,8 @@ def lambda_handler(event: dict, context: object) -> dict:
 
     if job_type == refresh_hot_deals.JOB_NAME:
         return refresh_hot_deals.run(settings)
+
+    if job_type == refresh_last_minute_deals.JOB_NAME:
+        return refresh_last_minute_deals.run(settings)
 
     raise ValueError(f"Unknown jobType: {job_type}")

@@ -33,10 +33,16 @@ def test_settings_defaults():
         assert settings.DEFAULT_ORIGIN == "TLV"
         assert settings.DEFAULT_MONTHS_AHEAD == 6
         assert settings.LOG_LEVEL == "INFO"
-        assert settings.HOT_DEALS_DESTINATIONS == ["LON", "PAR", "ATH", "ROM", "MAD", "BCN", "RHO", "HER"]
+        assert settings.HOT_DEALS_DESTINATIONS == ["LON", "PAR", "ATH", "ROM", "MAD", "BCN", "RHO", "HER", "AMS", "BUD", "VIE", "LIS", "BER"]
         assert settings.HOT_DEALS_SEARCH_HORIZON_DAYS == 90
         assert settings.HOT_DEALS_NIGHTS_MIN == 4
         assert settings.HOT_DEALS_NIGHTS_MAX == 5
         assert settings.HOT_DEALS_PASSENGERS == 1
         assert settings.HOT_DEALS_DIRECT_ONLY is True
         assert settings.HOT_DEALS_LIMIT == 20
+        assert settings.LAST_MINUTE_DESTINATIONS == ["LON", "PAR", "ATH", "ROM", "MAD", "BCN", "RHO", "HER", "AMS", "BUD", "VIE", "LIS", "BER"]
+        assert settings.LAST_MINUTE_HORIZON_DAYS == 14
+        assert settings.LAST_MINUTE_NIGHTS_MIN == 3
+        assert settings.LAST_MINUTE_NIGHTS_MAX == 5
+        assert settings.LAST_MINUTE_DIRECT_ONLY is True
+        assert settings.LAST_MINUTE_LIMIT == 20

@@ -26,3 +26,10 @@ class JsonFileStorageWriter:
         with open(file_path, "w", encoding="utf-8") as f:
             json.dump(data, f, indent=2)
         print(f"Saved {len(items)} hot deals to {file_path}")
+
+    def write_last_minute_deals(self, items: Sequence[HotDealCandidate]) -> None:
+        file_path = os.path.join(self.output_dir, "last_minute_deals.json")
+        data = [item.model_dump(mode="json") for item in items]
+        with open(file_path, "w", encoding="utf-8") as f:
+            json.dump(data, f, indent=2)
+        print(f"Saved {len(items)} last minute deals to {file_path}")

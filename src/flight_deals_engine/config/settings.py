@@ -38,5 +38,15 @@ class Settings(BaseSettings):
     HOT_DEALS_DIRECT_ONLY: bool = True
     HOT_DEALS_LIMIT: int = 20
 
+    # Last Minute Deals Configuration
+    LAST_MINUTE_DESTINATIONS: List[str] = Field(
+        default_factory=lambda: ["LON", "PAR", "ATH", "ROM", "MAD", "BCN", "RHO", "HER", "AMS", "BUD", "VIE", "LIS", "BER"]
+    )
+    LAST_MINUTE_HORIZON_DAYS: int = 14
+    LAST_MINUTE_NIGHTS_MIN: int = 3
+    LAST_MINUTE_NIGHTS_MAX: int = 5
+    LAST_MINUTE_DIRECT_ONLY: bool = True
+    LAST_MINUTE_LIMIT: int = 20
+
     # Observability
     LOG_LEVEL: str = "INFO"

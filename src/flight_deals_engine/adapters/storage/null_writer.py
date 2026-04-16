@@ -8,3 +8,6 @@ class NullStorageWriter:
 
     def write_hot_deals(self, items: Sequence[HotDealCandidate]) -> None:
         _ = items
+
+    def write_last_minute_deals(self, items: Sequence[HotDealCandidate]) -> None:
+        _ = items

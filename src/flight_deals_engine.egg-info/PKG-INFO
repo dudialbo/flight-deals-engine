@@ -7,133 +7,265 @@ Description-Content-Type: text/markdown
 Requires-Dist: pydantic<3,>=2.8
 Requires-Dist: pydantic-settings<3,>=2.4
 Requires-Dist: httpx<1,>=0.27
+Requires-Dist: boto3<2,>=1.34
 Provides-Extra: dev
 Requires-Dist: pytest<9,>=8.0; extra == "dev"
 Requires-Dist: pytest-cov<6,>=5.0; extra == "dev"
 Requires-Dist: ruff<1,>=0.6; extra == "dev"
 Requires-Dist: mypy<2,>=1.10; extra == "dev"
+Requires-Dist: boto3-stubs[s3]<2,>=1.34; extra == "dev"
 
 # flight-deals-engine
 
-Background jobs for refreshing flight price datasets and deal candidates for Amiluna.
+Background jobs for refreshing flight datasets and publishing flight
+deal outputs for Amiluna.
 
-This repository is intentionally scoped to **flights first**. It should still be designed so the same patterns can later serve a broader trip planner domain (hotels, bundles, planner enrichment, and other market-data refresh flows).
+This repository is intentionally scoped to **flights first**. It is
+designed so the same patterns can later support a broader trip‑planner
+domain, but the current implementation focuses on **refreshable flight
+prices** and **Hot Deals generation**.
 
-## Current scope
+------------------------------------------------------------------------
 
-This repo owns the **automation flow** that:
+## What this repo does
 
-- decides which flight searches should be refreshed
-- calls the existing search backend through internal APIs
-- normalizes backend responses into internal domain models
-- computes refresh outputs such as calendar snapshots and hot-deal candidates
-- persists outputs through storage abstractions
-- emits logs and metrics around each refresh run
+This repo owns the **asynchronous refresh flow** that:
+
+-   decides which flight searches should be refreshed
+-   calls the existing search backend through internal APIs
+-   normalizes backend responses into internal domain models
+-   selects refresh outputs such as:
+    -   calendar price snapshots
+    -   hot deals
+-   writes outputs through storage adapters
+-   emits logs around each refresh run
+
+------------------------------------------------------------------------
+
+## What this repo does not do
 
 This repo does **not**:
 
-- serve end-user APIs directly
-- talk to a third-party flight provider directly
-- define database or cache infrastructure
-- own frontend rendering
+-   serve end‑user APIs directly
+-   talk to third‑party flight providers directly
+-   own database or cache infrastructure
+-   render frontend UI
 
-## Why a dedicated repo
+The search backend remains the system of record for flight search
+execution.
 
-The serving backend and the refresh engine have different responsibilities:
+------------------------------------------------------------------------
 
-- serving backend = synchronous user-facing APIs
-- this repo = asynchronous scheduled data production
+## Current status
 
-Keeping them separate makes it easier to:
+Implemented jobs:
 
-- evolve scheduling logic independently
-- run local refresh jobs safely
-- introduce new refresh strategies without touching serving code
-- reuse refresh outputs for web, Telegram, Instagram, and later planner flows
+-   `refresh_calendar_prices`
+-   `refresh_hot_deals`
 
-## Initial architecture
+Current runtime model:
 
-```text
-EventBridge Schedule
-    -> Lambda handler
-        -> Job runner
-            -> Search planner
-                -> Existing search backend adapter
-                    -> Normalizer
-                        -> Storage adapter(s)
-                            -> future DB/cache implementation in infra repo
+-   Lambda‑first
+-   local execution supported through scripts
+-   backend integration through existing `/search/flights`
+-   storage abstraction with local/test‑friendly adapters
+
+Current project priority:
+
+**Go live with the Hot Deals section based on fixed destinations and
+refreshable prices.**
+
+------------------------------------------------------------------------
+
+## Hot Deals
+
+`refresh_hot_deals` is the main job currently used for go‑live
+preparation.
+
+### Current behavior
+
+The job:
+
+-   uses the existing `POST /search/flights` backend endpoint
+-   performs **one backend request per destination**
+-   searches with:
+    -   direct flights only
+    -   4--5 nights
+    -   rolling future search window
+-   selects the cheapest valid result per destination
+-   ranks final deals by:
+    1.  lowest price
+    2.  earliest departure date
+    3.  destination code tie‑breaker
+
+### Launch destinations
+
+The current fixed destination set:
+
+-   LON --- London
+-   PAR --- Paris
+-   ATH --- Athens
+-   ROM --- Rome
+-   MAD --- Madrid
+-   BCN --- Barcelona
+-   RHO --- Rhodes
+-   HER --- Crete
+
+### Example output structure
+
+``` json
+{
+  "deal_id": "...",
+  "origin": "TLV",
+  "destination_code": "ROM",
+  "destination_name": "Rome",
+  "price": 109.0,
+  "currency": "USD",
+  "departure_date": "2026-04-17",
+  "return_date": "2026-04-22",
+  "nights": 5,
+  "direct": true,
+  "stops": 0,
+  "airline": "Wizz Air",
+  "deeplink": "...",
+  "generated_at": "2026-03-14T10:58:25Z"
+}
 ```
 
-## Phase 1 principles
+------------------------------------------------------------------------
 
-- Flights only
-- Lambda runtime
-- No direct provider integration here
-- Existing search backend is the system of record for search execution
-- No database/cache Terraform in this repo
-- Storage is represented by interfaces and placeholder adapters only
-- Build for local execution and testability from day one
+## Calendar Prices
+
+`refresh_calendar_prices` generates cheapest‑price snapshots used for
+calendar‑style pricing and discovery flows.
+
+The job is implemented but currently secondary to the Hot Deals launch.
+
+------------------------------------------------------------------------
+
+## Architecture
+
+EventBridge Schedule\
+→ Lambda handler\
+→ Job runner\
+→ Planner / job service\
+→ Existing search backend adapter\
+→ Domain normalization and ranking\
+→ Storage adapter
+
+Design principles:
+
+-   flights‑only for the initial phase
+-   provider APIs are never called directly from this repo
+-   the existing backend remains the search boundary
+-   storage is abstracted from infrastructure
+-   local execution is supported for development
+
+------------------------------------------------------------------------
 
 ## Repository layout
 
-```text
-flight-deals-engine/
-├── README.md
-├── pyproject.toml
-├── .env.example
-├── docs/
-│   ├── coding-agent.md
-│   └── solution-design/
-│       ├── 01-scope-and-boundaries.md
-│       ├── 02-runtime-and-job-model.md
-│       ├── 03-search-backend-contract.md
-│       ├── 04-domain-model-and-normalization.md
-│       ├── 05-storage-abstraction.md
-│       ├── 06-observability-testing-and-ci.md
-│       └── 07-delivery-plan.md
-├── src/
-│   └── flight_deals_engine/
-│       ├── config/
-│       ├── domain/
-│       ├── application/
-│       ├── adapters/
-│       │   ├── search_backend/
-│       │   └── storage/
-│       ├── jobs/
-│       ├── observability/
-│       └── entrypoints/
-├── tests/
-└── scripts/
-```
+    flight-deals-engine/
+    ├── README.md
+    ├── pyproject.toml
+    ├── .env.example
+    ├── docs/
+    ├── src/
+    │   └── flight_deals_engine/
+    │       ├── config/
+    │       ├── domain/
+    │       ├── application/
+    │       ├── adapters/
+    │       ├── jobs/
+    │       ├── observability/
+    │       └── entrypoints/
+    ├── tests/
+    └── scripts/
 
-## First implementation target
-
-The first vertical slice should be:
-
-1. Event payload chooses a job type
-2. Job builds a set of search requests for selected routes/months
-3. Search backend adapter calls the existing backend
-4. Normalizer maps the response into internal models
-5. Storage adapter receives the output payload
-6. Logs/metrics summarize the run
+------------------------------------------------------------------------
 
 ## Local development
 
-```bash
-python -m venv .venv
-source .venv/bin/activate
-pip install -e .[dev]
-pytest
-```
+Create a virtual environment and install dependencies:
 
-## Planned first jobs
+    python -m venv .venv
+    source .venv/bin/activate
+    pip install -e .[dev]
 
-- `refresh_calendar_prices`
-- `refresh_hot_deals`
+Run tests:
 
-Only `refresh_calendar_prices` should be implemented first.
+    pytest
 
-## Related docs
+------------------------------------------------------------------------
 
-- `docs/coding-agent.md` — detailed brief and implementation guidance for a coding agent
-- `docs/solution-design/*.md` — design decisions and phased implementation plan
+## Local execution
+
+Run calendar refresh:
+
+    python scripts/run_local_refresh.py
+
+Run hot deals:
+
+    python scripts/run_local_hot_deals.py
+
+If the configured storage adapter writes to JSON, the output file can be
+inspected locally.
+
+------------------------------------------------------------------------
+
+## Configuration
+
+Main runtime settings include:
+
+-   backend base URL
+-   origin airport
+-   search horizon days
+-   direct‑only flag
+-   nights range
+-   per‑destination result limit
+-   destination list
+-   storage mode / output path
+
+Defaults are intended for local development and can be overridden via
+environment variables.
+
+------------------------------------------------------------------------
+
+## Storage model
+
+This repository does not own production persistence infrastructure.
+
+Storage is handled via adapters:
+
+-   local JSON writer for development
+-   test adapters for unit testing
+-   production DB/cache implementations will live in a dedicated
+    infrastructure repository
+
+------------------------------------------------------------------------
+
+## Current limitations
+
+This is intentionally a **v1 refresh engine**.
+
+Not implemented yet:
+
+-   historical deal scoring
+-   advanced ranking signals
+-   provider fallback strategies
+-   production persistence infrastructure in this repo
+-   hotels or bundle search
+
+------------------------------------------------------------------------
+
+## Next integration step
+
+The next practical step is to connect `refresh_hot_deals` to a real
+publish target:
+
+-   S3 JSON dataset
+-   backend persistence endpoint
+-   future database adapter
+
+Once connected, the frontend Hot Deals section can consume the dataset
+directly.

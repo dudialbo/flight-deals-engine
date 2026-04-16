@@ -34,6 +34,24 @@ class HotDealsRefreshService:
             currency=settings.DEFAULT_CURRENCY
         )
 
+    def build_last_minute_target(self, origin: str, destination: str, settings: Settings) -> RefreshTarget:
+        """
+        Builds a RefreshTarget covering the next 14 days for last-minute deal searches.
+        """
+        today = date.today()
+        window_end = today + timedelta(days=settings.LAST_MINUTE_HORIZON_DAYS)
+
+        return RefreshTarget(
+            origin=origin,
+            destination=destination,
+            date_from=today,
+            date_to=window_end,
+            nights_min=settings.LAST_MINUTE_NIGHTS_MIN,
+            nights_max=settings.LAST_MINUTE_NIGHTS_MAX,
+            direct_only=settings.LAST_MINUTE_DIRECT_ONLY,
+            currency=settings.DEFAULT_CURRENCY
+        )
+
     def fetch_and_select_best(self, target: RefreshTarget) -> FlightOption | None:
         """
         Fetches flights for a target, applies defensive validation, and selects the cheapest valid option.
